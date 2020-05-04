@@ -16,7 +16,8 @@ Run `cp sample.env .env` then edit the values if they need to be changed from th
 Copy the contributions CSV to `./tmp/data.csv`
 
 ```sh
-docker-compose up -d # This starts the database running on port 54322 and launches the PGWeb postgres client on port 8081
+docker-compose up -d # This starts the database running on port 54322 and launches the PGWeb postgres client on port 8081'
+npm install
 npm run migrate up
 node bin/etl.js # Alternatively `node bin/etl.js /path/to/some/file.csv`, if you to use a file other than ./tmp/data.csv
 npm run start:dev
