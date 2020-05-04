@@ -7,14 +7,20 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate": "npm run parse-dot-env node-pg-migrate",
     "migrate:no-dot-env": "node-pg-migrate",
-    "parse-dot-env": "eval $(egrep -v '^#' .env | xargs)"
+    "parse-dot-env": "eval $(egrep -v '^#' .env | xargs)",
+    "start": "node index.js",
+    "start:dev": "nodemon start"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^8.2.0",
+    "express": "^4.17.1",
     "node-pg-migrate": "^4.7.0",
     "pg": "^8.0.3",
     "pg-copy-streams": "^3.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
   }
 }

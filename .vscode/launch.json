@@ -12,6 +12,16 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/data-cleaning/bin/etl.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug App",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/data-cleaning/index.js",
+            "envFile": "${workspaceFolder}/data-cleaning/.env"
         }
     ]
 }
