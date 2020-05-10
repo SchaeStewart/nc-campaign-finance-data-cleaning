@@ -36,7 +36,6 @@ const insertContributor = async ({
   );
 };
 
-const flatten = (acc, val) => [...acc, ...val];
 
 const insertContributions = (contributions) => {
   // ($1, $2, $3, etc), ($4, $5, $6, etc), (etc)

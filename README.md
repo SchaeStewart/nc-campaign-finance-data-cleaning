@@ -29,10 +29,23 @@ The server is running on http://localhost:3000
 
 ### Routes  
 
-`/contributions/matches/:name/:addr` will return records that are similar to the given name and address  
+GET `/contributions/matches/:name/:addr` will return records that are similar to the given name and address  
 Example to get contributions for John Abbott: `curl localhost:3000/contributions/matches/john%20abbott/410%20S%20Swing%20Rd`  
 Alternatively to get contributions of Jon Abbott: `curl localhost:3000/contributions/matches/jon%20abbott/410%20S%20Swing%20Rd`  
 You will see the that this request returns the same results
+
+GET `/contributions/raw` will return a list of contributions that are a close match
+
+POST `/contributions/clean` Send a list of contribution ids that all belong to the same contributor
+EX:
+
+```json
+{
+  "data": [
+    "UUUD1", "UUID2"
+  ]
+}
+```
 
 *Note: Parameters should be URI Encoded*
 
