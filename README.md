@@ -16,7 +16,8 @@ Run `cp sample.env .env` then edit the values if they need to be changed from th
 Copy the contributions CSV to `./tmp/data.csv`
 
 ```sh
-docker-compose up -d # This starts the database running on port 54322 and launches the PGWeb postgres client on port 8081
+docker-compose up -d # This starts the database running on port 54322 and launches the PGWeb postgres client on port 8081'
+npm install
 npm run migrate up
 node bin/etl.js # Alternatively `node bin/etl.js /path/to/some/file.csv`, if you to use a file other than ./tmp/data.csv
 npm run start:dev
@@ -56,6 +57,7 @@ There are VSCode debug configurations setup for the etl script and the server
 
 - As a data cleaner I should be presented with a list of contributions which are likely matches and be able to indicate which are matches and which are not
   - Matches should be unique. IE multiple people should not see already processed contributions 
+- A contributor uuid is created upon record cleaning. This means that if for some reason, the same person came up on two different cleanings, they would be classified as different records
 
 ### Concerns
 

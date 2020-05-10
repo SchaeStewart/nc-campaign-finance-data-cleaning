@@ -16,11 +16,13 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "lodash": "^4.17.15",
     "node-pg-migrate": "^4.7.0",
     "pg": "^8.0.3",
     "pg-copy-streams": "^3.0.0"
   },
   "devDependencies": {
+    "body-parser": "^1.19.0",
     "nodemon": "^2.0.3"
   }
 }
