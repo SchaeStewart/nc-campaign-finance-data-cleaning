@@ -38,15 +38,17 @@ class App extends React.Component {
     }
   }
 
-  // TODO send the data to the endpoint instead of logging it
+  // gets the uuids from the selected rows and sends a POST request to the API
   submitData = () => {
     let uuids = this.table.selectionContext.selected; // we bind this.table in the ref attribute of the BootstrapTable element below
-    console.log(uuids);
+    axios.post('/contributions/clean', {
+      data: uuids
+    })
   }
 
   // makes a request to get a set of matched contributions and updates the state
   getContributions = async () => {
-    axios.get("/contributions/raw").then((response) => {
+    axios.get('/contributions/raw').then((response) => {
       this.setState({
         contributions: response.data.data
       });
@@ -62,12 +64,12 @@ class App extends React.Component {
       <Container>
         <Row>
           <Col>
-            <h1 className="text-center">Campaign Finance Data Cleaning</h1>
+            <h1 className='text-center'>Campaign Finance Data Cleaning</h1>
           </Col>
         </Row>
         <Row>
           <Col>
-            <p className="text-center">Select all contributions that come from the same donor</p>
+            <p className='text-center'>Select all contributions that come from the same donor</p>
           </Col>
         </Row>
         <Row>
@@ -82,7 +84,7 @@ class App extends React.Component {
             />
           </Col>
         </Row>
-        <Button className="float-right" variant="primary" onClick={ this.submitData }>Submit</Button>
+        <Button className='float-right' variant='primary' onClick={ this.submitData }>Submit</Button>
       </Container>
     );
   }
