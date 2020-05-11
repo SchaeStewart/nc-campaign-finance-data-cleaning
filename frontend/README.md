@@ -1,3 +1,14 @@
+# Dev Setup
+
+1. Run the API server in the `data-cleaning` directory. See [here](https://github.com/SchaeStewart/nc-campaign-finance) for details.
+1. Run `cp sample.env .env` then edit the values if they need to be changed from the default.
+1. Run `npm install`.
+1. Run `yarn start`.
+
+In development, requests are proxied to port 3000, where the API server is expected to be running. Change this value in `package.json` if needed.
+
+# Create React App Info
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
