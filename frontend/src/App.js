@@ -41,9 +41,20 @@ class App extends React.Component {
   // gets the uuids from the selected rows and sends a POST request to the API
   submitData = () => {
     let uuids = this.table.selectionContext.selected; // we bind this.table in the ref attribute of the BootstrapTable element below
-    axios.post('/contributions/clean', {
-      data: uuids
-    })
+    if(uuids.length === 0) {
+      // TODO change alert to something a little nicer
+      alert("Please select at least one entry");
+    }
+    else {
+      axios.post('/contributions/clean', {
+        data: uuids
+      })
+      .then(() => {
+        // TODO change alert to something a little nicer
+        alert("Submitted!")
+        this.getContributions();
+      });
+    }
   }
 
   // makes a request to get a set of matched contributions and updates the state
