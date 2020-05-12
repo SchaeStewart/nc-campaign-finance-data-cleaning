@@ -1,8 +1,9 @@
+const path = require('path')
 const express = require('express');
 const bodyParser = require('body-parser');
 const db = require('./db');
 const app = express();
-const port = 3000;
+const {PORT: port = 3001} = process.env
 
 app.use(bodyParser.json());
 app.get('/status', (req, res) => res.send({ status: 'online' }));
@@ -111,6 +112,16 @@ app.post('/contributions/clean', async (req, res) => {
     client !== null && client.release();
   }
 });
+
+if (process.env.NODE_ENV === 'production') {
+  // Serve any static files
+  app.use(express.static(path.join(__dirname, 'client/build')));
+    
+  // Handle React routing, return all requests to React app
+  app.get('*', function(req, res) {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+}
 
 /**
  *

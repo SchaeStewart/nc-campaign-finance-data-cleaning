@@ -25,7 +25,7 @@ npm run start:dev
 
 The data is now loaded into the database.  
 You can view the data in your preferred SQL client or by going to http://localhost:8081 in your browser.  
-The server is running on http://localhost:3000
+The server is running on http://localhost:3001
 
 ### Routes  
 
