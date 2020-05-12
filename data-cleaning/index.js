@@ -5,6 +5,8 @@ const db = require('./db');
 const app = express();
 const {PORT: port = 3001} = process.env
 
+// TODO: prefix api routes. Update UI
+
 app.use(bodyParser.json());
 app.get('/status', (req, res) => res.send({ status: 'online' }));
 

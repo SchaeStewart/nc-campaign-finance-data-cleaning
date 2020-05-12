@@ -1,5 +1,7 @@
-start-prod: build-prod
-	cd data-cleaning; NODE_ENV=production npm start
+start-prod:
+	cd data-cleaning; NODE_ENV=production PORT=3000 npm start
+
+build-and-start-prod: build-prod start-prod
 
 build-prod: build-ui
 	cp -r ./frontend/build ./data-cleaning/client
