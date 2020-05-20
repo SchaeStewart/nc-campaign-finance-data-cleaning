@@ -4,6 +4,7 @@ start-prod:
 build-and-start-prod: build-prod start-prod
 
 build-prod: build-ui
+	cd ./data-cleaning; npm install
 	cp -r ./frontend/build ./data-cleaning/client
 
 build-ui:
