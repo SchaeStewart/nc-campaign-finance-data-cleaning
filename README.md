@@ -27,6 +27,22 @@ The data is now loaded into the database.
 You can view the data in your preferred SQL client or by going to http://localhost:8081 in your browser.  
 The server is running on http://localhost:3001
 
+### Auto Process Records
+
+To run the auto process program do the following
+
+*Update your `.env` `DATABASE_URL` if you want to run it against a remote DB*
+
+```sh
+node bin/process.js
+```
+
+This will run the auto process with a 0.7 (70%) threshold. To use a different threshold do the following:
+
+```sh
+node bin/process.js 0.8
+```
+
 ### Routes  
 
 GET `/contributions/matches/:name/:addr` will return records that are similar to the given name and address  

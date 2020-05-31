@@ -2,30 +2,39 @@
 require('dotenv').config();
 const db = require('../db');
 
-// Automatically process any results that are match at 100%/80%/70%
-// Count number of distinct id's in db after processing
+const limit = process.argv[2] || 0.7
 
+/**
+ * Currently this code loops through the raw_contributions table,
+ * gets a record that is not in the contributions table,
+ * then searches for like records and inserts them into the contributors and contributions table.
+ * Doing it this way means all records end up in the contributions table.
+*/
 (async () => {
   let client = null;
   try {
     client = await db.getClient();
-    await client.query('select set_limit(0.7)');
-    while (true) { // WARNING infinite loop
-      console.time('x')
-    // for (let i = 0; i >= 0; i++) { // WARNING: infinite loop
+    await client.query('select set_limit($1)', [limit]);
+    while (true) { // WARNING infinite loop. The program should exit when there is no search record in the db
+      console.time('record')
+
+      // console.time('search') // ~6ms
       const record = (
         await client.query(
-          `select name, street_line_1 as address from raw_contributions where id not in (select source_contribution_id from contributions) limit 1`,
+          `select id, name, street_line_1 as address from raw_contributions 
+            where not exists(select 1 from contributions where source_contribution_id = id)
+            limit 1`,
         )
       );
       if (record.rowCount === 0 || record.rows.length === 0) {
-        break;
+        console.log('no search record found. stopping process')
+        throw new Error("no search record found. Exiting process")
       }
+      // console.timeEnd('search')
+
       const search = record.rows[0]
-      const records = await client.query(
+      let records = await client.query(
         `select *
-        ,similarity(name, $1) as name_sml
-        ,similarity(street_line_1, $2) as addr1_sml
         from raw_contributions
         where name % $1
             and street_line_1 % $2
@@ -35,8 +44,9 @@ const db = require('../db');
       );
 
       if (records.rowCount < 1) {
-        console.log('Skipping record');
-        break;
+        console.log('No matches found for id:', search.id);
+        // Handles a bad address case
+        records = await client.query(`select * from raw_contributions where id = $1`, [search.id])
       }
 
       const contributor = await db.insertContributor(records.rows[0]);
@@ -47,18 +57,13 @@ const db = require('../db');
         ...x,
       }));
       const inserts = await db.insertContributions(rawContributions);
+      console.timeEnd('record')
       if (inserts.rowCount === records.rowCount) {
         console.log('Processed', inserts.rowCount, 'records');
       } else {
         console.error('Unable to process record');
       }
-
-      console.timeEnd('x')
     }
-    const uniqueContributors = await client.query(
-      'select count (distinct id) from contributors',
-    )
-    console.log('Unique contributors', uniqueContributors.rows[0].count);
   } catch (e) {
     console.error(e);
   } finally {
