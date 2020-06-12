@@ -51,12 +51,72 @@ Alternatively to get contributions of Jon Abbott: `curl localhost:3000/contribut
 You will see the that this request returns the same results
 
 GET `/contributions/raw` will return a list of contributions that are a close match
-
-POST `/contributions/clean` Send a list of contribution ids that all belong to the same contributor
 EX:
 
 ```json
 {
+    "data": {
+        "raw": [
+            {
+                "id": "150a9ad1-8732-40ae-a614-dbec4b8c37c0",
+                "name": "John Smith",
+                "street_line_1": "123 Apple St",
+                "street_line_2": null,
+                "city": "Raleigh",
+                "state": "NC",
+                "zip_code": "12345",
+                "profession": "Business",
+                "employer_name": "Business Place",
+                "transaction_type": "Individual",
+                "committee_name": "Mrs. Politician",
+                "committee_sboe_id": "STA-1234-5678",
+                "committee_street_1": "PO BOX 12345",
+                "committee_street_2": null,
+                "committee_city": "RALEIGH",
+                "committee_state": "NC",
+                "committee_zip_code": "12345",
+                "report_name": "2020 First Quarter",
+                "date_occurred": "2/3/20",
+                "account_code": "Not Available",
+                "amount": 500,
+                "form_of_payment": "Check",
+                "purpose": null,
+                "candidate_or_referendum_name": null,
+                "declaration": null
+            }
+        ],
+        "clean": [
+            {
+                "id": "956fddd7-20cd-407f-9c7a-75fce61cfe6b",
+                "name": "John Smith",
+                "street_line_1": "123 Apple St",
+                "street_line_2": null,
+                "city": "Raleigh",
+                "state": "NC",
+                "zip_code": "12345",
+                "profession": "Business",
+                "employer_name": "Business Place"
+            }
+        ]
+    },
+    "count": {
+        "raw": 1,
+        "clean": 1
+    },
+    "search": {
+        "name": "John Smith",
+        "address": "123 Apple ST"
+    }
+}
+```
+
+POST `/contributions/clean` Send a list of contribution ids that all belong to the same contributor
+EX:  
+`contributorID` is optional. If it is provided, the records will be associated with that ID
+
+```json
+{
+  "contributorID": "",
   "data": [
     "UUUD1", "UUID2"
   ]

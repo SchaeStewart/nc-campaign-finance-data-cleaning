@@ -14,3 +14,6 @@ clean-db:
 	docker-compose -f data-cleaning/docker-compose.yml down -v
 	docker-compose -f data-cleaning/docker-compose.yml up -d
 	cd data-cleaning; npm run migrate up; node bin/etl.js
+
+etl:
+	cd ./data-cleaning; node bin/etl.js
