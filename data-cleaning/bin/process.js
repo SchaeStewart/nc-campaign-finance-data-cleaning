@@ -2,7 +2,11 @@
 require('dotenv').config();
 const db = require('../db');
 
-const limit = process.argv[2] || 0.7
+const limit = process.argv[2] ? process.argv[2] : 0.7;
+
+// TODO: don't add records that have a single match
+// - How to handle loop code
+// - Create a tmp table to store record ids with one match?
 
 /**
  * Currently this code loops through the raw_contributions table,
@@ -15,17 +19,23 @@ const limit = process.argv[2] || 0.7
   try {
     client = await db.getClient();
     await client.query('select set_limit($1)', [limit]);
+    await client.query(`create temporary table no_matches (id UUID not null)`)
     while (true) { // WARNING infinite loop. The program should exit when there is no search record in the db
-      console.time('record')
+      const tmp = await client.query('select * from no_matches')
+      console.log('no matches:x', tmp.rowCount)
+      // console.time('record')
+
 
       // console.time('search') // ~6ms
       const record = (
         await client.query(
           `select id, name, street_line_1 as address from raw_contributions 
-            where not exists(select 1 from contributions where source_contribution_id = id)
+            where not exists (select 1 from contributions where source_contribution_id = id)
+              and id not in (select id from no_matches)
             limit 1`,
         )
       );
+
       if (record.rowCount === 0 || record.rows.length === 0) {
         console.log('no search record found. stopping process')
         throw new Error("no search record found. Exiting process")
@@ -43,10 +53,11 @@ const limit = process.argv[2] || 0.7
         [search.name, search.address],
       );
 
-      if (records.rowCount < 1) {
-        console.log('No matches found for id:', search.id);
-        // Handles a bad address case
-        records = await client.query(`select * from raw_contributions where id = $1`, [search.id])
+      if (records.rowCount <= 1) {
+        console.log('No matches for name:', search.name, 'address', search.address)
+        await client.query(`insert into no_matches (id) values ($1)`, [search.id])
+        // console.timeEnd('record')
+        continue
       }
 
       const contributor = await db.insertContributor(records.rows[0]);
@@ -57,7 +68,7 @@ const limit = process.argv[2] || 0.7
         ...x,
       }));
       const inserts = await db.insertContributions(rawContributions);
-      console.timeEnd('record')
+      // console.timeEnd('record')
       if (inserts.rowCount === records.rowCount) {
         console.log('Processed', inserts.rowCount, 'records');
       } else {
