@@ -9,7 +9,7 @@
   "devDependencies": {},
   "scripts": {
     "build": "make build-prod",
-    "start": "cd data-cleaning && npm start"
+    "start": "node data-cleaning/index.js"
   },
   "repository": {
     "type": "git",
