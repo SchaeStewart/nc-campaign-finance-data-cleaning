@@ -79,9 +79,9 @@ class App extends React.Component {
       });
     }
     else {
-      let contributorID = this.cleanTable.selectionContext.selected;
+      let contributorIDs = this.cleanTable.selectionContext.selected; // we bind this.cleanTable in the ref attribute of the BootstrapTable element below
       // the user may only select one existing contributor into which to merge matching raw contributions
-      if (contributorID.length > 1) {
+      if (contributorIDs.length > 1) {
         this.setState({
           showModal: true,
           modalTitle: 'More than one existing contributor selected',
@@ -91,10 +91,8 @@ class App extends React.Component {
       else {
         let payload = {
           data: uuids,
-          contributorID: contributorID.length > 0 && contributorID[0] ? contributorID : '' // if no selection or null selection, create new contributor
+          contributorID: contributorIDs.length > 0 && contributorIDs[0] ? contributorIDs[0] : '' // if no selection or null selection, create new contributor
         }
-        // console.log(contributorID);
-        // console.log(payload)
         axios.post('/api/contributions/clean', payload)
         .then((response) => {
           if(response.status === 200) {
@@ -185,7 +183,7 @@ class App extends React.Component {
             </Card>
           </Accordion>
         </Row>
-        {(this.state.cleanContributions && this.state.cleanContributions.length > 0) &&
+        {(this.state.cleanContributions && this.state.cleanContributions.length > 1) &&
           <div>
             <Row className='mt-3'>
               <Col>
