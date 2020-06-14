@@ -69,7 +69,7 @@ class App extends React.Component {
 
   // gets the uuids from the selected rows and sends a POST request to the API
   submitData = () => {
-    let uuids = this.rawTable.selectionContext.selected; // we bind this.rawTable in the ref attribute of the BootstrapTable element below
+    const uuids = this.rawTable.selectionContext.selected; // we bind this.rawTable in the ref attribute of the BootstrapTable element below
     // the user must select at least one raw contribution to submit
     if(uuids.length === 0) {
       this.setState({
@@ -79,7 +79,7 @@ class App extends React.Component {
       });
     }
     else {
-      let contributorIDs = this.cleanTable.selectionContext.selected; // we bind this.cleanTable in the ref attribute of the BootstrapTable element below
+      const contributorIDs = this.cleanTable.selectionContext.selected; // we bind this.cleanTable in the ref attribute of the BootstrapTable element below
       // the user may only select one existing contributor into which to merge matching raw contributions
       if (contributorIDs.length > 1) {
         this.setState({
@@ -89,28 +89,27 @@ class App extends React.Component {
         });
       }
       else {
-        let payload = {
+        const payload = {
           data: uuids,
-          contributorID: contributorIDs.length > 0 && contributorIDs[0] ? contributorIDs[0] : '' // if no selection or null selection, create new contributor
+          // if no selection or null selection, create new contributor
+          contributorID: contributorIDs.length > 0 && contributorIDs[0] ? contributorIDs[0] : '' 
         }
         axios.post('/api/contributions/clean', payload)
-        .then((response) => {
-          if(response.status === 200) {
+          .then((response) => {
             this.setState({
               showModal: true,
               modalTitle: 'Success',
               modalBody: 'Your submission has been processed successfully!'
             });
             this.getContributions();
-          }
-          else {
+          })
+          .catch((error) => {
             this.setState({
               showModal: true,
               modalTitle: 'Error',
               modalBody: 'There was an error with your submission. Please try again later or refresh for a new set of contributions.'
             });
-          }
-        });
+          });
       }
     }
   }
@@ -128,6 +127,8 @@ class App extends React.Component {
           loading: false
         });
       })
+      // if there's an error, just clear the tables
+      // we don't show an error message in the modal because, it overwrites the success message if a volunteer cleans the last record in the database
       .catch((error) => {
         this.setState({
           rawContributions: [],
@@ -152,7 +153,7 @@ class App extends React.Component {
         <Row>
           <Col>
             <h2>Matches Found</h2>
-            <p>Select all contributions that come from the same donor</p>
+            <p>Select all contributions that come from the same contributor.</p>
           </Col>
         </Row>
         <Row>
@@ -196,7 +197,9 @@ class App extends React.Component {
             <Row className='mt-3'>
               <Col>
                 <h2>Existing Contributors Found</h2>
-                <p>We found similar contributors with records that have already been processed. Please select the contributor that matches the records above, or select 'New Contributor' if there is no match.</p>
+                <p>We found similar contributors with records that have already been processed. 
+                  Select the contributor that matches the records above, or select "New Contributor" 
+                  if there is no match. If you don't select any option, a new contributor will be created.</p>
               </Col>
             </Row>
             <Row>
