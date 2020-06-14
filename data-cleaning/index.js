@@ -158,6 +158,9 @@ api.post('/contributions/clean', async (req, res) => {
   }
 });
 
+app.get('/status', (req, res) => res.send({ status: 'online' }));
+app.use('/api', api)
+
 // Serve react
 if (process.env.NODE_ENV === 'production') {
   // Serve any static files
@@ -165,6 +168,7 @@ if (process.env.NODE_ENV === 'production') {
     
   // Handle React routing, return all requests to React app
   app.get('*', function(req, res) {
+    console.log(req.path)
     res.sendFile(path.join(__dirname, 'client', 'index.html'));
   });
 }
@@ -186,8 +190,6 @@ function handleError(
   res.status(statusCode).send({ error: msg });
 }
 
-app.get('/status', (req, res) => res.send({ status: 'online' }));
-app.use('/api', api)
 
 app.listen(port, () =>
   console.log(`app listening at http://localhost:${port}`),

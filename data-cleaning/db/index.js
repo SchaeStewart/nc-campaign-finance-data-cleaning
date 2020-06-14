@@ -6,7 +6,7 @@ require('dotenv').config();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl:
-    process.env.NODE_ENV === 'production'
+    !process.env.DB_IGNORE_SSL && process.env.NODE_ENV === 'production'
       ? {
           rejectUnauthorized: false,
         }
