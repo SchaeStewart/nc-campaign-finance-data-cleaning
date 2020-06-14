@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import axios from 'axios';
-import {Container, Row, Col, Button, Modal, Spinner} from 'react-bootstrap';
+import {Container, Row, Col, Button, Modal, Spinner, Accordion, Card} from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import BootstrapTable from 'react-bootstrap-table-next';
@@ -26,10 +26,15 @@ const columns = [
   }
 ];
 
-const selectRow = {
+const selectRowCheck = {
   mode: 'checkbox',
   clickToSelect: true, // enables clicking the row to select the item
 };
+
+const selectRowRadio = {
+  mode: 'radio',
+  clickToSelect: true, // enables clicking the row to select the item
+}
 
 const paginationOpts = {
   sizePerPage: 25,
@@ -50,7 +55,8 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      contributions: [],
+      rawContributions: [],
+      cleanContributions: [],
       showModal: false,
       modalTitle: "",
       modalBody: "",
@@ -60,7 +66,8 @@ class App extends React.Component {
 
   // gets the uuids from the selected rows and sends a POST request to the API
   submitData = () => {
-    let uuids = this.table.selectionContext.selected; // we bind this.table in the ref attribute of the BootstrapTable element below
+    let uuids = this.rawTable.selectionContext.selected; // we bind this.rawTable in the ref attribute of the BootstrapTable element below
+    // the user must select at least one raw contribution to submit
     if(uuids.length === 0) {
       this.setState({
         showModal: true,
@@ -69,26 +76,41 @@ class App extends React.Component {
       });
     }
     else {
-      axios.post('/contributions/clean', {
-        data: uuids
-      })
-      .then((response) => {
-        if(response.status === 200) {
-          this.setState({
-            showModal: true,
-            modalTitle: "Success",
-            modalBody: "Your submission has been processed successfully!"
-          });
-          this.getContributions();
+      let contributorID = this.cleanTable.selectionContext.selected;
+      // the user may only select one existing contributor into which to merge matching raw contributions
+      if (contributorID.length > 1) {
+        this.setState({
+          showModal: true,
+          modalTitle: "More than one existing contributor selected",
+          modalBody: "Please select at most one existing contributor."
+        });
+      }
+      else {
+        let payload = {
+          data: uuids,
+          contributorID: contributorID.length > 0 && contributorID[0] ? contributorID : '' // if no selection or null selection, create new contributor
         }
-        else {
-          this.setState({
-            showModal: true,
-            modalTitle: "Error",
-            modalBody: "There was an error with your submission. Please try again later or refresh for a new set of contributions."
-          });
-        }
-      });
+        // console.log(contributorID);
+        // console.log(payload)
+        axios.post('/api/contributions/clean', payload)
+        .then((response) => {
+          if(response.status === 200) {
+            this.setState({
+              showModal: true,
+              modalTitle: "Success",
+              modalBody: "Your submission has been processed successfully!"
+            });
+            this.getContributions();
+          }
+          else {
+            this.setState({
+              showModal: true,
+              modalTitle: "Error",
+              modalBody: "There was an error with your submission. Please try again later or refresh for a new set of contributions."
+            });
+          }
+        });
+      }
     }
   }
 
@@ -97,9 +119,10 @@ class App extends React.Component {
     this.setState({
       loading: true
     });
-    axios.get('/contributions/raw').then((response) => {
+    axios.get('/api/contributions/raw').then((response) => {
       this.setState({
-        contributions: response.data.data,
+        rawContributions: response.data.data.raw,
+        cleanContributions: response.data.data.clean.concat([{'id': null, 'name': 'New contributor'}]),
         loading: false
       });
     });
@@ -119,29 +142,88 @@ class App extends React.Component {
         </Row>
         <Row>
           <Col>
-            <p className='text-center'>Select all contributions that come from the same donor</p>
+            <h2>Matches Found</h2>
+            <p>Select all contributions that come from the same donor</p>
           </Col>
         </Row>
         <Row>
-            {this.state.loading ? 
-              <Col className='text-center'>
-                <Spinner animation="border" variant="primary" role="status">
-                  <span className="sr-only">Loading...</span>
-                </Spinner>
-              </Col>
-              :
+          <Accordion defaultActiveKey="0" style={{"width" : "100%"}}>
+            <Card>
+              <Accordion.Toggle as={Card.Header} eventKey="0">
+                Raw Contributions Table
+              </Accordion.Toggle>
+              <Accordion.Collapse eventKey="0">
+                <Card.Body>
+                  {this.state.loading ? 
+                    <Col className='text-center'>
+                      <Spinner animation="border" variant="primary" role="status">
+                        <span className="sr-only">Loading...</span>
+                      </Spinner>
+                    </Col>
+                    :
+                    <Col>
+                      <BootstrapTable
+                        ref={ t => this.rawTable = t }
+                        keyField='id'
+                        data={ this.state.rawContributions }
+                        columns={ columns }
+                        selectRow={ selectRowCheck }
+                        pagination={ paginationFactory(paginationOpts) }
+                      />
+                    </Col>
+                  }
+                </Card.Body>
+              </Accordion.Collapse>
+            </Card>
+          </Accordion>
+        </Row>
+        {(this.state.cleanContributions && this.state.cleanContributions.length > 0) &&
+          <div>
+            <Row className='mt-3'>
               <Col>
-                <BootstrapTable
-                  ref={ t => this.table = t }
-                  keyField='id'
-                  data={ this.state.contributions }
-                  columns={ columns }
-                  selectRow={ selectRow }
-                  pagination={ paginationFactory(paginationOpts) }
-                />
-                <Button className='float-right' variant='primary' onClick={ this.submitData }>Submit</Button>
+                <h2>Existing Contributors Found</h2>
+                <p>We found similar contributors with records that have already been processed. Please select the contributor that matches the records above, or select "New Contributor" if there is no match.</p>
               </Col>
+            </Row>
+            <Row>
+            <Accordion defaultActiveKey="0" style={{"width" : "100%"}}>
+              <Card>
+                <Accordion.Toggle as={Card.Header} eventKey="0">
+                  Existing Contributors Table
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="0">
+                  <Card.Body>
+                    {this.state.loading ? 
+                      <Col className='text-center'>
+                        <Spinner animation="border" variant="primary" role="status">
+                          <span className="sr-only">Loading...</span>
+                        </Spinner>
+                      </Col>
+                      :
+                      <Col>
+                        <BootstrapTable
+                          ref={ t => this.cleanTable = t }
+                          keyField='id'
+                          data={ this.state.cleanContributions }
+                          columns={ columns }
+                          selectRow={ selectRowRadio }
+                          pagination={ paginationFactory(paginationOpts) }
+                        />
+                      </Col>
+                    }
+                    </Card.Body>
+                  </Accordion.Collapse>
+                </Card>
+              </Accordion>
+            </Row>
+          </div>
+        }
+        <Row className='mt-2'>
+          <Col>
+            {!this.state.loading &&
+              <Button className='float-right' variant='primary' onClick={ this.submitData }>Submit</Button>
             }
+          </Col>
         </Row>
         <Modal show={ this.state.showModal } onHide={ () => this.setState({showModal: false}) }>
           <Modal.Header closeButton>
