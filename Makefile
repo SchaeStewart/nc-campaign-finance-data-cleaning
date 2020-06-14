@@ -8,6 +8,7 @@ build-and-start-prod: build-prod start-prod
 
 build-prod: build-prod-ui
 	cp -r ./frontend/build ./data-cleaning/client; cd ./data-cleaning; npm install
+	cd ./data-cleaning; npm run migrate up 
 
 build-ui:
 	cd ./frontend; npm run build
