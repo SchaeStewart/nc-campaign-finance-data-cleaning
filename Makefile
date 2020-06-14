@@ -8,6 +8,7 @@ build-and-start-prod: build-prod start-prod
 
 build-prod: build-prod-ui
 	cp -r ./frontend/build ./data-cleaning/client; cd ./data-cleaning; npm install
+	cd ./data-cleaning; npm install
 	cd ./data-cleaning; npm run migrate up 
 
 build-ui:
@@ -20,3 +21,6 @@ clean-db:
 	docker-compose -f data-cleaning/docker-compose.yml down -v
 	docker-compose -f data-cleaning/docker-compose.yml up -d
 	cd data-cleaning; npm run migrate up; node bin/etl.js
+
+etl:
+	cd ./data-cleaning; node bin/etl.js
