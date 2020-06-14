@@ -120,13 +120,21 @@ class App extends React.Component {
     this.setState({
       loading: true
     });
-    axios.get('/api/contributions/raw').then((response) => {
-      this.setState({
-        rawContributions: response.data.data.raw,
-        cleanContributions: response.data.data.clean.concat([{'id': null, 'name': 'New contributor'}]),
-        loading: false
+    axios.get('/api/contributions/raw')
+      .then((response) => {
+        this.setState({
+          rawContributions: response.data.data.raw,
+          cleanContributions: response.data.data.clean.concat([{'id': null, 'name': 'New contributor'}]),
+          loading: false
+        });
+      })
+      .catch((error) => {
+        this.setState({
+          rawContributions: [],
+          cleanContributions: [],
+          loading: false
+        });
       });
-    });
   }
 
   componentDidMount() {

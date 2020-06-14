@@ -100,7 +100,7 @@ api.get('/contributions/raw', async (req, res) => {
 api.post('/contributions/clean', async (req, res) => {
   let client = null;
   try {
-    const { data: ids = [], contributorID = '' } = req.body;
+    let { data: ids = [], contributorID = '' } = req.body;
     if (ids.length === 0) {
       return handleError(res, 'unable to process request. data is empty');
     }
