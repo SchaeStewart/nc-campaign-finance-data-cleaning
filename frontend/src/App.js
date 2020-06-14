@@ -1,11 +1,12 @@
-import React from 'react';
 import './App.css';
-import axios from 'axios';
-import {Container, Row, Col, Button, Modal, Spinner, Accordion, Card} from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
-import BootstrapTable from 'react-bootstrap-table-next';
 import 'react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css';
+import React from 'react';
+import axios from 'axios';
+import {Container, Row, Col, Button, Modal, Spinner, Accordion, Card} from 'react-bootstrap';
+import {ChevronUp, ChevronDown} from 'react-bootstrap-icons';
+import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 
 // Define columns here
@@ -57,9 +58,11 @@ class App extends React.Component {
     this.state = {
       rawContributions: [],
       cleanContributions: [],
+      rawTableOpen: true,
+      cleanTableOpen: true,
       showModal: false,
-      modalTitle: "",
-      modalBody: "",
+      modalTitle: '',
+      modalBody: '',
       loading: true
     }
   }
@@ -71,8 +74,8 @@ class App extends React.Component {
     if(uuids.length === 0) {
       this.setState({
         showModal: true,
-        modalTitle: "No selection made",
-        modalBody: "Please select at least one entry before pressing submit."
+        modalTitle: 'No selection made',
+        modalBody: 'Please select at least one entry before pressing submit.'
       });
     }
     else {
@@ -81,8 +84,8 @@ class App extends React.Component {
       if (contributorID.length > 1) {
         this.setState({
           showModal: true,
-          modalTitle: "More than one existing contributor selected",
-          modalBody: "Please select at most one existing contributor."
+          modalTitle: 'More than one existing contributor selected',
+          modalBody: 'Please select at most one existing contributor.'
         });
       }
       else {
@@ -97,16 +100,16 @@ class App extends React.Component {
           if(response.status === 200) {
             this.setState({
               showModal: true,
-              modalTitle: "Success",
-              modalBody: "Your submission has been processed successfully!"
+              modalTitle: 'Success',
+              modalBody: 'Your submission has been processed successfully!'
             });
             this.getContributions();
           }
           else {
             this.setState({
               showModal: true,
-              modalTitle: "Error",
-              modalBody: "There was an error with your submission. Please try again later or refresh for a new set of contributions."
+              modalTitle: 'Error',
+              modalBody: 'There was an error with your submission. Please try again later or refresh for a new set of contributions.'
             });
           }
         });
@@ -147,17 +150,22 @@ class App extends React.Component {
           </Col>
         </Row>
         <Row>
-          <Accordion defaultActiveKey="0" style={{"width" : "100%"}}>
+          <Accordion defaultActiveKey='0' style={{'width' : '100%'}}>
             <Card>
-              <Accordion.Toggle as={Card.Header} eventKey="0">
+              <Accordion.Toggle as={Card.Header} eventKey='0' onClick={() => this.setState({ rawTableOpen: !this.state.rawTableOpen })}>
                 Raw Contributions Table
+                {this.state.rawTableOpen ? 
+                  <ChevronUp className='float-right'></ChevronUp>
+                  :
+                  <ChevronDown className='float-right'></ChevronDown>
+                }
               </Accordion.Toggle>
-              <Accordion.Collapse eventKey="0">
+              <Accordion.Collapse eventKey='0'>
                 <Card.Body>
                   {this.state.loading ? 
                     <Col className='text-center'>
-                      <Spinner animation="border" variant="primary" role="status">
-                        <span className="sr-only">Loading...</span>
+                      <Spinner animation='border' variant='primary' role='status'>
+                        <span className='sr-only'>Loading...</span>
                       </Spinner>
                     </Col>
                     :
@@ -182,21 +190,26 @@ class App extends React.Component {
             <Row className='mt-3'>
               <Col>
                 <h2>Existing Contributors Found</h2>
-                <p>We found similar contributors with records that have already been processed. Please select the contributor that matches the records above, or select "New Contributor" if there is no match.</p>
+                <p>We found similar contributors with records that have already been processed. Please select the contributor that matches the records above, or select 'New Contributor' if there is no match.</p>
               </Col>
             </Row>
             <Row>
-            <Accordion defaultActiveKey="0" style={{"width" : "100%"}}>
+            <Accordion defaultActiveKey='0' style={{'width' : '100%'}}>
               <Card>
-                <Accordion.Toggle as={Card.Header} eventKey="0">
+                <Accordion.Toggle as={Card.Header} eventKey='0' onClick={() => this.setState({ cleanTableOpen: !this.state.cleanTableOpen })}>
                   Existing Contributors Table
+                  {this.state.cleanTableOpen ? 
+                    <ChevronUp className='float-right'></ChevronUp>
+                    :
+                    <ChevronDown className='float-right'></ChevronDown>
+                  }
                 </Accordion.Toggle>
-                <Accordion.Collapse eventKey="0">
+                <Accordion.Collapse eventKey='0'>
                   <Card.Body>
                     {this.state.loading ? 
                       <Col className='text-center'>
-                        <Spinner animation="border" variant="primary" role="status">
-                          <span className="sr-only">Loading...</span>
+                        <Spinner animation='border' variant='primary' role='status'>
+                          <span className='sr-only'>Loading...</span>
                         </Spinner>
                       </Col>
                       :
@@ -231,7 +244,7 @@ class App extends React.Component {
           </Modal.Header>
           <Modal.Body>{ this.state.modalBody }</Modal.Body>
           <Modal.Footer>
-            <Button variant="primary" onClick={ () => this.setState({showModal: false}) }>
+            <Button variant='primary' onClick={ () => this.setState({showModal: false}) }>
               Close
             </Button>
           </Modal.Footer>
