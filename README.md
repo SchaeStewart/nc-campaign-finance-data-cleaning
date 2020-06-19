@@ -45,6 +45,9 @@ node bin/process.js 0.8
 
 ### Routes  
 
+For all api routes providing a `x-trigram-limit` header will change the match level of the request  
+The value of the header should be a decimal number. I.E. `0.7` for a 70% match
+
 GET `api/contributions/matches/:name/:addr` will return records that are similar to the given name and address  
 Example to get contributions for John Abbott: `curl localhost:3000/contributions/matches/john%20abbott/410%20S%20Swing%20Rd`  
 Alternatively to get contributions of Jon Abbott: `curl localhost:3000/contributions/matches/jon%20abbott/410%20S%20Swing%20Rd`  
@@ -152,3 +155,27 @@ There are VSCode debug configurations setup for the etl script and the server
 
 - We may want to rethink how the ETL script works. Currently it truncates the raw_contributions table and reloads the dataset which means each record will be assigned a new UUID. This could cause issues because the contributions table utilizes that UUID
   - One possible solution would be to generate a UUIDV5 for each record using the fields in the record while ingesting the record and before inserting into the database. This probably isn't the cleanest solution, but I wanted to document the idea and concern somewhere.
+
+
+### Future enhancements
+
+- Use a UUIDv5 or UUIDv3 and generate the UUID from the raw_contribution. This would give us reproducible UUIDs, which would make future data cleaning easier and more stable 
+- For future cleaning, we can store all known permutations of a given contributors name and address and then make unclean data against it
+- Define onconflict conditions
+
+## How To's
+
+### Load data into Heroku
+
+The auto process script chokes when running against Heroku database so to get around it you can do the following:  
+(NB: I haven't tried running this on a database with data already in it yet)
+
+1. Load the data locally and run the auto process
+2. Run `node bin/exportToCSV.js`
+   1. This should output 3 csv files
+   2. Optionally run `node bin/exportToCSV.js some/other/directory` to specify the output directory
+3. Run the `node bin/importFromCSV.js table_name file_path` for each of the outputted files
+   1. EX: `node bin/importFromCSV.js raw_contributions ./raw_contributions.csv`
+   1. EX: `node bin/importFromCSV.js  contributions ./contributions.csv`
+   1. EX: `node bin/importFromCSV.js contributors ./contributors.csv`
+   1. Remember to set the `DATABASE_URL` environment variable and to add the `?sslmode=require` to load the data into Heroku

@@ -5,14 +5,20 @@ const db = require('./db');
 const app = express();
 const api = express.Router()
 api.use(bodyParser.json());
-const { PORT: port = 3001 } = process.env;
+const { PORT: port = 3001,
+TRGM_LIMIT = 0.5} = process.env;
+
+api.use((req, res, next) => {
+  req.trigramLimit = req.header('x-trigram-limit') ? req.header('x-trigram-limit') : TRGM_LIMIT
+  next()
+})
 
 api.get('/contributions/matches/:name/:addr1', async (req, res) => {
   const client = await db.getClient();
   try {
     const name = decodeURIComponent(req.params.name);
     const addr = decodeURIComponent(req.params.addr1);
-    await client.query('select set_limit(0.7)');
+    await client.query('select set_limit($1)', [req.trigramLimit]);
     const records = await client.query(
       `select *
      ,similarity(name, $1) as name_sml
@@ -62,7 +68,7 @@ api.get('/contributions/raw', async (req, res) => {
       address: record.rows[0].search_address,
     };
 
-    await client.query('select set_limit(0.7)');
+    await client.query('select set_limit($1)', [req.trigramLimit]);
     const rawPromise = client.query(
       `select *
      from raw_contributions
@@ -158,8 +164,9 @@ api.post('/contributions/clean', async (req, res) => {
   }
 });
 
-app.get('/status', (req, res) => res.send({ status: 'online' }));
 app.use('/api', api)
+
+app.get('/status', (req, res) => res.send({ status: 'online' }));
 
 // Serve react
 if (process.env.NODE_ENV === 'production') {
