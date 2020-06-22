@@ -1,0 +1,24 @@
+{
+  "name": "campaign-finance-data-cleaning",
+  "version": "1.0.0",
+  "description": "## How to Run",
+  "main": "index.js",
+  "dependencies": {
+    "data-cleaning": "file:data-cleaning"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "make build-prod",
+    "start": "node data-cleaning/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ncopenpass/campaign-finance-data-cleaning.git"
+  },
+  "author": "Schaffer Stewart",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ncopenpass/campaign-finance-data-cleaning/issues"
+  },
+  "homepage": "https://github.com/ncopenpass/campaign-finance-data-cleaning#readme"
+}

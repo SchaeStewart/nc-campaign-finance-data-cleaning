@@ -12,6 +12,7 @@
     "dotenv": "^8.2.0",
     "react": "^16.13.1",
     "react-bootstrap": "^1.0.1",
+    "react-bootstrap-icons": "^1.0.3-alpha4",
     "react-bootstrap-table-next": "^4.0.1",
     "react-bootstrap-table2-paginator": "^2.1.2",
     "react-dom": "^16.13.1",

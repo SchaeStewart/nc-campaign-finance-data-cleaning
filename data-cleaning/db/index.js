@@ -1,9 +1,17 @@
-const _ = require('lodash')
+const _ = require('lodash');
 const pg = require('pg');
 const { Pool } = pg;
 require('dotenv').config();
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl:
+    !process.env.DB_IGNORE_SSL && process.env.NODE_ENV === 'production'
+      ? {
+          rejectUnauthorized: false,
+        }
+      : undefined,
+});
 const query = (text, params) => pool.query(text, params);
 /**
  * @returns {Promise<pg.PoolClient>}
@@ -36,11 +44,10 @@ const insertContributor = async ({
   );
 };
 
-
 const insertContributions = (contributions) => {
   // ($1, $2, $3, etc), ($4, $5, $6, etc), (etc)
-  const values = _.flatten(contributions
-    .map((contribution) => [
+  const values = _.flatten(
+    contributions.map((contribution) => [
       contribution.source_contribution_id,
       contribution.contributor_id,
       contribution.transaction_type,
@@ -59,21 +66,21 @@ const insertContributions = (contributions) => {
       contribution.purpose,
       contribution.candidate_or_referendum_name,
       contribution.declaration,
-    ]))
+    ]),
+  );
   // take values, and generate value str. Divide by 18
-  const valueStr = values.reduce(
-    (acc, val, idx) => {
-      const value = `${acc}\$${idx+1}`
+  const valueStr = values
+    .reduce((acc, val, idx) => {
+      const value = `${acc}\$${idx + 1}`;
       if (idx === 0) {
-        return `(${value},`
-      } else if ((idx+1) % 18 === 0) {
-        return `${value}), (`
+        return `(${value},`;
+      } else if ((idx + 1) % 18 === 0) {
+        return `${value}), (`;
       } else {
-        return `${value},`
+        return `${value},`;
       }
-    },
-    '',
-  ).slice(0, -3)
+    }, '')
+    .slice(0, -3);
   return query(
     `insert into contributions (source_contribution_id, contributor_id, transaction_type, committee_name, committee_sboe_id,
       committee_street_1, committee_street_2, committee_city, committee_state, committee_zip_code,

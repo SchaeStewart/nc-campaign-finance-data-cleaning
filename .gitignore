@@ -5,3 +5,4 @@ node_modules/
 data.csv
 client/
 build/
+data-cleaning/tmp/*.csv
