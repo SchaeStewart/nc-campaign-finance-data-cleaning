@@ -233,71 +233,79 @@ class App extends React.Component {
             </Card>
           </Accordion>
         </Row>
-        {this.state.cleanContributions &&
-          this.state.cleanContributions.length > 1 && (
-            <div>
-              <Row className="mt-3">
-                <Col>
-                  <h2>Existing Contributors Found</h2>
-                  <p>
-                    We found similar contributors with records that have already
-                    been processed. Select the contributor that matches the
-                    records above, or select "New Contributor" if there is no
-                    match. If you don't select any option, a new contributor
-                    will be created.
-                  </p>
-                </Col>
-              </Row>
-              <Row>
-                <Accordion defaultActiveKey="0" style={{ width: '100%' }}>
-                  <Card>
-                    <Accordion.Toggle
-                      as={Card.Header}
-                      eventKey="0"
-                      onClick={() =>
-                        this.setState({
-                          cleanTableOpen: !this.state.cleanTableOpen,
-                        })
-                      }
-                    >
-                      Existing Contributors Table
-                      {this.state.cleanTableOpen ? (
-                        <ChevronUp className="float-right"></ChevronUp>
+        {this.state.cleanContributions && this.state.cleanContributions.length > 1 ? (
+          <div>
+            <Row className="mt-3">
+              <Col>
+                <h2>Existing Contributors Found</h2>
+                <p>
+                  We found similar contributors with records that have already
+                  been processed. Select the contributor that matches the
+                  records above, or select "New Contributor" if there is no
+                  match. If you don't select any option, a new contributor
+                  will be created.
+                </p>
+              </Col>
+            </Row>
+            <Row>
+              <Accordion defaultActiveKey="0" style={{ width: '100%' }}>
+                <Card>
+                  <Accordion.Toggle
+                    as={Card.Header}
+                    eventKey="0"
+                    onClick={() =>
+                      this.setState({
+                        cleanTableOpen: !this.state.cleanTableOpen,
+                      })
+                    }
+                  >
+                    Existing Contributors Table
+                    {this.state.cleanTableOpen ? (
+                      <ChevronUp className="float-right"></ChevronUp>
+                    ) : (
+                      <ChevronDown className="float-right"></ChevronDown>
+                    )}
+                  </Accordion.Toggle>
+                  <Accordion.Collapse eventKey="0">
+                    <Card.Body>
+                      {this.state.loading ? (
+                        <Col className="text-center">
+                          <Spinner
+                            animation="border"
+                            variant="primary"
+                            role="status"
+                          >
+                            <span className="sr-only">Loading...</span>
+                          </Spinner>
+                        </Col>
                       ) : (
-                        <ChevronDown className="float-right"></ChevronDown>
+                        <Col>
+                          <BootstrapTable
+                            ref={(t) => (this.cleanTable = t)}
+                            keyField="id"
+                            data={this.state.cleanContributions}
+                            columns={columns}
+                            selectRow={selectRowRadio}
+                            pagination={paginationFactory(paginationOpts)}
+                          />
+                        </Col>
                       )}
-                    </Accordion.Toggle>
-                    <Accordion.Collapse eventKey="0">
-                      <Card.Body>
-                        {this.state.loading ? (
-                          <Col className="text-center">
-                            <Spinner
-                              animation="border"
-                              variant="primary"
-                              role="status"
-                            >
-                              <span className="sr-only">Loading...</span>
-                            </Spinner>
-                          </Col>
-                        ) : (
-                          <Col>
-                            <BootstrapTable
-                              ref={(t) => (this.cleanTable = t)}
-                              keyField="id"
-                              data={this.state.cleanContributions}
-                              columns={columns}
-                              selectRow={selectRowRadio}
-                              pagination={paginationFactory(paginationOpts)}
-                            />
-                          </Col>
-                        )}
-                      </Card.Body>
-                    </Accordion.Collapse>
-                  </Card>
-                </Accordion>
-              </Row>
-            </div>
-          )}
+                    </Card.Body>
+                  </Accordion.Collapse>
+                </Card>
+              </Accordion>
+            </Row>
+          </div>
+        ) : (
+          <Row className="mt-3">
+            <Col>
+              <h2>No Existing Contributors Found</h2>
+              <p>
+                Hit submit to create a new contributor based on your selection above.
+              </p>
+            </Col>
+          </Row>
+        )}
         <Row className="mt-2">
           <Col>
             {!this.state.loading && (
