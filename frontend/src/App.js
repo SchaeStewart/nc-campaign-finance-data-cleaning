@@ -93,7 +93,7 @@ class App extends React.Component {
     if (uuids.length === 0) {
       this.setState({
         showModal: true,
-        modalTitle: 'No selection made',
+        modalTitle: 'No raw contributions selected',
         modalBody: 'Please select at least one entry before pressing submit.',
       });
     } else {
@@ -104,12 +104,20 @@ class App extends React.Component {
         this.cleanTable.selectionContext.selected)
           ? this.cleanTable.selectionContext.selected
           : []; // we bind this.cleanTable in the ref attribute of the BootstrapTable element below
+      // if existing contributors are found, then the user must make a selection
+      if (this.state.cleanContributions.length > 1 && contributorIDs.length < 1) {
+        this.setState({
+          showModal: true,
+          modalTitle: 'No existing contributor selected',
+          modalBody: 'Please select one existing contributor or "New contributor".',
+        });
+      }
       // the user may only select one existing contributor into which to merge matching raw contributions
-      if (contributorIDs.length > 1) {
+      else if (contributorIDs.length > 1) {
         this.setState({
           showModal: true,
           modalTitle: 'More than one existing contributor selected',
-          modalBody: 'Please select at most one existing contributor.',
+          modalBody: 'Please select one existing contributor or "New contributor".',
         });
       } else {
         const payload = {
