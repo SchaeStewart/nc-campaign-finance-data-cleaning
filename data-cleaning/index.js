@@ -3,15 +3,16 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const db = require('./db');
 const app = express();
-const api = express.Router()
+const api = express.Router();
 api.use(bodyParser.json());
-const { PORT: port = 3001,
-TRGM_LIMIT = 0.5} = process.env;
+const { PORT: port = 3001, TRGM_LIMIT = 0.5 } = process.env;
 
 api.use((req, res, next) => {
-  req.trigramLimit = req.header('x-trigram-limit') ? req.header('x-trigram-limit') : TRGM_LIMIT
-  next()
-})
+  req.trigramLimit = req.header('x-trigram-limit')
+    ? req.header('x-trigram-limit')
+    : TRGM_LIMIT;
+  next();
+});
 
 api.get('/contributions/matches/:name/:addr1', async (req, res) => {
   const client = await db.getClient();
@@ -60,7 +61,7 @@ api.get('/contributions/raw', async (req, res) => {
     `);
 
     if (record.rowCount < 1) {
-      return handleError(res, 'no records found to process')
+      return handleError(res, 'no records found to process');
     }
 
     const search = {
@@ -68,6 +69,8 @@ api.get('/contributions/raw', async (req, res) => {
       address: record.rows[0].search_address,
     };
 
+
+    // TODO: could match on zip/city to speed up search
     await client.query('select set_limit($1)', [req.trigramLimit]);
     const rawPromise = client.query(
       `select *
@@ -85,7 +88,10 @@ api.get('/contributions/raw', async (req, res) => {
     const [raw, clean] = await Promise.allSettled([rawPromise, cleanPromise]);
 
     res.send({
-      data: { raw: raw.value.rows, clean: raw.value.rowCount === 0 ? [] : clean.value.rows },
+      data: {
+        raw: raw.value.rows,
+        clean: raw.value.rowCount === 0 ? [] : clean.value.rows,
+      },
       count: { raw: raw.value.rowCount, clean: clean.value.rowCount },
       search,
     });
@@ -164,7 +170,7 @@ api.post('/contributions/clean', async (req, res) => {
   }
 });
 
-app.use('/api', api)
+app.use('/api', api);
 
 app.get('/status', (req, res) => res.send({ status: 'online' }));
 
@@ -172,10 +178,10 @@ app.get('/status', (req, res) => res.send({ status: 'online' }));
 if (process.env.NODE_ENV === 'production') {
   // Serve any static files
   app.use(express.static(path.join(__dirname, 'client')));
-    
+
   // Handle React routing, return all requests to React app
-  app.get('*', function(req, res) {
-    console.log(req.path)
+  app.get('*', function (req, res) {
+    console.log(req.path);
     res.sendFile(path.join(__dirname, 'client', 'index.html'));
   });
 }
@@ -196,7 +202,6 @@ function handleError(
   console.error(err);
   res.status(statusCode).send({ error: msg });
 }
-
 
 app.listen(port, () =>
   console.log(`app listening at http://localhost:${port}`),
