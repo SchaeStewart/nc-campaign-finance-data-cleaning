@@ -6,10 +6,10 @@ import React from 'react';
 import axios from 'axios';
 import {
   Container,
+  Toast,
   Row,
   Col,
   Button,
-  Modal,
   Spinner,
   Accordion,
   Card,
@@ -81,9 +81,9 @@ class App extends React.Component {
       cleanContributions: [], // Stores the contributors that have already been cleaned, retrieved from API endpoint
       rawTableOpen: true, // Open/close state of the raw table accordion
       cleanTableOpen: true, // Open/close state of the contributors accordion
-      showModal: false, // Show status of the alert modal
-      modalTitle: '', // Title of the alert modal
-      modalBody: '', // Body of the alert modal
+      showToast: false, // Show status of the alert toast
+      toastTitle: '', // Title of the alert toast
+      toastBody: '', // Body of the alert toast
       loading: true, // True when waiting for response from API endpoint
     };
   }
@@ -94,9 +94,9 @@ class App extends React.Component {
     // the user must select at least one raw contribution to submit
     if (uuids.length === 0) {
       this.setState({
-        showModal: true,
-        modalTitle: 'No raw contributions selected',
-        modalBody: 'Please select at least one entry before pressing submit.',
+        showToast: true,
+        toastTitle: 'No selection made',
+        toastBody: 'Please select at least one entry before pressing submit.',
       });
     } else {
       const contributorIDs =
@@ -117,9 +117,9 @@ class App extends React.Component {
       // the user may only select one existing contributor into which to merge matching raw contributions
       else if (contributorIDs.length > 1) {
         this.setState({
-          showModal: true,
-          modalTitle: 'More than one existing contributor selected',
-          modalBody: 'Please select one existing contributor or "New contributor".',
+          showToast: true,
+          toastTitle: 'More than one existing contributor selected',
+          toastBody: 'Please select at most one existing contributor.',
         });
       } else {
         const payload = {
@@ -136,9 +136,9 @@ class App extends React.Component {
             this.setState({
               matchCount: this.state.matchCount + 1,
               recordCount: this.state.recordCount + uuids.length,
-              showModal: true,
-              modalTitle: 'Success',
-              modalBody: 'Your submission has been processed successfully!',
+              showToast: true,
+              toastTitle: 'Success',
+              toastBody: 'Your submission has been processed successfully!',
             });
             // Saving new progress counters to local browser storage
             localStorage.setItem('matchCount', this.state.matchCount);
@@ -147,9 +147,9 @@ class App extends React.Component {
           })
           .catch((error) => {
             this.setState({
-              showModal: true,
-              modalTitle: 'Error',
-              modalBody:
+              showToast: true,
+              toastTitle: 'Error',
+              toastBody:
                 'There was an error with your submission. Please try again later or refresh for a new set of contributions.',
             });
           });
@@ -174,7 +174,7 @@ class App extends React.Component {
         });
       })
       // if there's an error, just clear the tables
-      // we don't show an error message in the modal because, it overwrites the success message if a volunteer cleans the last record in the database
+      // we don't show an error message in the toast because, it overwrites the success message if a volunteer cleans the last record in the database
       .catch((error) => {
         this.setState({
           rawContributions: [],
@@ -190,7 +190,7 @@ class App extends React.Component {
 
   render() {
     return (
-      <div>
+      <Container fluid>
         <Row>
           <Col md={2}>
             <Card className="progressCard">
@@ -341,27 +341,15 @@ class App extends React.Component {
             </Row>
           </Col>
           <Col>
-          {/* This Col is just used as space to center the main Col */}
+            <Toast className="alertToast" onClose={() => this.setState({ showToast: false })} show={this.state.showToast} delay={8000} autohide>
+              <Toast.Header>
+                <strong className="mr-auto">{this.state.toastTitle}</strong>
+              </Toast.Header>
+              <Toast.Body>{this.state.toastBody}</Toast.Body>
+            </Toast>
           </Col>
-        </Row>
-        <Modal
-          show={this.state.showModal}
-          onHide={() => this.setState({ showModal: false })}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.modalTitle}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>{this.state.modalBody}</Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="primary"
-              onClick={() => this.setState({ showModal: false })}
-            >
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
+        </Row>  
+      </Container>
     );
   }
 }
