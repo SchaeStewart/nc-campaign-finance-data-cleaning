@@ -1,0 +1,11 @@
+.progressCard {
+    top: 1rem; 
+    margin-right: 1rem;
+}
+
+.alertToast {
+    margin-left: 1rem;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}

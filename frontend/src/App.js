@@ -6,10 +6,10 @@ import React from 'react';
 import axios from 'axios';
 import {
   Container,
+  Toast,
   Row,
   Col,
   Button,
-  Modal,
   Spinner,
   Accordion,
   Card,
@@ -75,14 +75,16 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      rawContributions: [],
-      cleanContributions: [],
-      rawTableOpen: true,
-      cleanTableOpen: true,
-      showModal: false,
-      modalTitle: '',
-      modalBody: '',
-      loading: true,
+      matchCount: localStorage.getItem('matchCount') ? parseInt(localStorage.getItem('matchCount')) : 0, // Count of how many matches the user has made, saved in local browser storage
+      recordCount: localStorage.getItem('recordCount') ? parseInt(localStorage.getItem('recordCount')) : 0, // Count of how many total records the user has cleaned, saved in local storage
+      rawContributions: [], // Stores the raw contributions, retrieved from API endpoint
+      cleanContributions: [], // Stores the contributors that have already been cleaned, retrieved from API endpoint
+      rawTableOpen: true, // Open/close state of the raw table accordion
+      cleanTableOpen: true, // Open/close state of the contributors accordion
+      showToast: false, // Show status of the alert toast
+      toastTitle: '', // Title of the alert toast
+      toastBody: '', // Body of the alert toast
+      loading: true, // True when waiting for response from API endpoint
     };
   }
 
@@ -92,9 +94,9 @@ class App extends React.Component {
     // the user must select at least one raw contribution to submit
     if (uuids.length === 0) {
       this.setState({
-        showModal: true,
-        modalTitle: 'No raw contributions selected',
-        modalBody: 'Please select at least one entry before pressing submit.',
+        showToast: true,
+        toastTitle: 'No selection made',
+        toastBody: 'Please select at least one entry before pressing submit.',
       });
     } else {
       const contributorIDs =
@@ -115,9 +117,9 @@ class App extends React.Component {
       // the user may only select one existing contributor into which to merge matching raw contributions
       else if (contributorIDs.length > 1) {
         this.setState({
-          showModal: true,
-          modalTitle: 'More than one existing contributor selected',
-          modalBody: 'Please select one existing contributor or "New contributor".',
+          showToast: true,
+          toastTitle: 'More than one existing contributor selected',
+          toastBody: 'Please select at most one existing contributor.',
         });
       } else {
         const payload = {
@@ -132,17 +134,22 @@ class App extends React.Component {
           .post('/api/contributions/clean', payload)
           .then((response) => {
             this.setState({
-              showModal: true,
-              modalTitle: 'Success',
-              modalBody: 'Your submission has been processed successfully!',
+              matchCount: this.state.matchCount + 1,
+              recordCount: this.state.recordCount + uuids.length,
+              showToast: true,
+              toastTitle: 'Success',
+              toastBody: 'Your submission has been processed successfully!',
             });
+            // Saving new progress counters to local browser storage
+            localStorage.setItem('matchCount', this.state.matchCount);
+            localStorage.setItem('recordCount', this.state.recordCount);
             this.getContributions();
           })
           .catch((error) => {
             this.setState({
-              showModal: true,
-              modalTitle: 'Error',
-              modalBody:
+              showToast: true,
+              toastTitle: 'Error',
+              toastBody:
                 'There was an error with your submission. Please try again later or refresh for a new set of contributions.',
             });
           });
@@ -167,7 +174,7 @@ class App extends React.Component {
         });
       })
       // if there's an error, just clear the tables
-      // we don't show an error message in the modal because, it overwrites the success message if a volunteer cleans the last record in the database
+      // we don't show an error message in the toast because, it overwrites the success message if a volunteer cleans the last record in the database
       .catch((error) => {
         this.setState({
           rawContributions: [],
@@ -183,76 +190,29 @@ class App extends React.Component {
 
   render() {
     return (
-      <Container>
+      <Container fluid>
         <Row>
-          <Col>
-            <h1 className="text-center">Campaign Finance Data Cleaning</h1>
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <h2>Matches Found</h2>
-            <p>Select all contributions that come from the same contributor.</p>
-          </Col>
-        </Row>
-        <Row>
-          <Accordion defaultActiveKey="0" style={{ width: '100%' }}>
-            <Card>
-              <Accordion.Toggle
-                as={Card.Header}
-                eventKey="0"
-                onClick={() =>
-                  this.setState({ rawTableOpen: !this.state.rawTableOpen })
-                }
-              >
-                Raw Contributions Table
-                {this.state.rawTableOpen ? (
-                  <ChevronUp className="float-right"></ChevronUp>
-                ) : (
-                  <ChevronDown className="float-right"></ChevronDown>
-                )}
-              </Accordion.Toggle>
-              <Accordion.Collapse eventKey="0">
-                <Card.Body>
-                  {this.state.loading ? (
-                    <Col className="text-center">
-                      <Spinner
-                        animation="border"
-                        variant="primary"
-                        role="status"
-                      >
-                        <span className="sr-only">Loading...</span>
-                      </Spinner>
-                    </Col>
-                  ) : (
-                    <Col>
-                      <BootstrapTable
-                        ref={(t) => (this.rawTable = t)}
-                        keyField="id"
-                        data={this.state.rawContributions}
-                        columns={columns}
-                        selectRow={selectRowCheck}
-                        pagination={paginationFactory(paginationOpts)}
-                      />
-                    </Col>
-                  )}
-                </Card.Body>
-              </Accordion.Collapse>
+          <Col md={2}>
+            <Card className="progressCard">
+              <Card.Body>
+                <Card.Title>Your Progress</Card.Title>
+                <Card.Text>
+                  <p>Matches submitted: { this.state.matchCount }</p>
+                  <p>Records cleaned: { this.state.recordCount }</p>
+                </Card.Text>
+              </Card.Body>
             </Card>
-          </Accordion>
-        </Row>
-        {this.state.cleanContributions && this.state.cleanContributions.length > 1 ? (
-          <div>
-            <Row className="mt-3">
+          </Col>
+          <Col md={8}>
+            <Row>
               <Col>
-                <h2>Existing Contributors Found</h2>
-                <p>
-                  We found similar contributors with records that have already
-                  been processed. Select the contributor that matches the
-                  records above, or select "New Contributor" if there is no
-                  match. If you don't select any option, a new contributor
-                  will be created.
-                </p>
+                <h1 className="text-center">Campaign Finance Data Cleaning</h1>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <h2>Matches Found</h2>
+                <p>Select all contributions that come from the same contributor.</p>
               </Col>
             </Row>
             <Row>
@@ -262,13 +222,11 @@ class App extends React.Component {
                     as={Card.Header}
                     eventKey="0"
                     onClick={() =>
-                      this.setState({
-                        cleanTableOpen: !this.state.cleanTableOpen,
-                      })
+                      this.setState({ rawTableOpen: !this.state.rawTableOpen })
                     }
                   >
-                    Existing Contributors Table
-                    {this.state.cleanTableOpen ? (
+                    Raw Contributions Table
+                    {this.state.rawTableOpen ? (
                       <ChevronUp className="float-right"></ChevronUp>
                     ) : (
                       <ChevronDown className="float-right"></ChevronDown>
@@ -289,11 +247,11 @@ class App extends React.Component {
                       ) : (
                         <Col>
                           <BootstrapTable
-                            ref={(t) => (this.cleanTable = t)}
+                            ref={(t) => (this.rawTable = t)}
                             keyField="id"
-                            data={this.state.cleanContributions}
+                            data={this.state.rawContributions}
                             columns={columns}
-                            selectRow={selectRowRadio}
+                            selectRow={selectRowCheck}
                             pagination={paginationFactory(paginationOpts)}
                           />
                         </Col>
@@ -303,47 +261,94 @@ class App extends React.Component {
                 </Card>
               </Accordion>
             </Row>
-          </div>
-        ) : (
-          <Row className="mt-3">
-            <Col>
-              <h2>No Existing Contributors Found</h2>
-              <p>
-                Hit submit to create a new contributor based on your selection above.
-              </p>
-            </Col>
-          </Row>
-        )}
-        <Row className="mt-2">
-          <Col>
-            {!this.state.loading && (
-              <Button
-                className="float-right"
-                variant="primary"
-                onClick={this.submitData}
-              >
-                Submit
-              </Button>
-            )}
+            {this.state.cleanContributions &&
+              this.state.cleanContributions.length > 1 && (
+                <div>
+                  <Row className="mt-3">
+                    <Col>
+                      <h2>Existing Contributors Found</h2>
+                      <p>
+                        We found similar contributors with records that have already
+                        been processed. Select the contributor that matches the
+                        records above, or select "New Contributor" if there is no
+                        match. If you don't select any option, a new contributor
+                        will be created.
+                      </p>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Accordion defaultActiveKey="0" style={{ width: '100%' }}>
+                      <Card>
+                        <Accordion.Toggle
+                          as={Card.Header}
+                          eventKey="0"
+                          onClick={() =>
+                            this.setState({
+                              cleanTableOpen: !this.state.cleanTableOpen,
+                            })
+                          }
+                        >
+                          Existing Contributors Table
+                          {this.state.cleanTableOpen ? (
+                            <ChevronUp className="float-right"></ChevronUp>
+                          ) : (
+                            <ChevronDown className="float-right"></ChevronDown>
+                          )}
+                        </Accordion.Toggle>
+                        <Accordion.Collapse eventKey="0">
+                          <Card.Body>
+                            {this.state.loading ? (
+                              <Col className="text-center">
+                                <Spinner
+                                  animation="border"
+                                  variant="primary"
+                                  role="status"
+                                >
+                                  <span className="sr-only">Loading...</span>
+                                </Spinner>
+                              </Col>
+                            ) : (
+                              <Col>
+                                <BootstrapTable
+                                  ref={(t) => (this.cleanTable = t)}
+                                  keyField="id"
+                                  data={this.state.cleanContributions}
+                                  columns={columns}
+                                  selectRow={selectRowRadio}
+                                  pagination={paginationFactory(paginationOpts)}
+                                />
+                              </Col>
+                            )}
+                          </Card.Body>
+                        </Accordion.Collapse>
+                      </Card>
+                    </Accordion>
+                  </Row>
+                </div>
+              )}
+            <Row className="mt-2">
+              <Col>
+                {!this.state.loading && (
+                  <Button
+                    className="float-right"
+                    variant="primary"
+                    onClick={this.submitData}
+                  >
+                    Submit
+                  </Button>
+                )}
+              </Col>
+            </Row>
           </Col>
-        </Row>
-        <Modal
-          show={this.state.showModal}
-          onHide={() => this.setState({ showModal: false })}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.modalTitle}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>{this.state.modalBody}</Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="primary"
-              onClick={() => this.setState({ showModal: false })}
-            >
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+          <Col>
+            <Toast className="alertToast" onClose={() => this.setState({ showToast: false })} show={this.state.showToast} delay={8000} autohide>
+              <Toast.Header>
+                <strong className="mr-auto">{this.state.toastTitle}</strong>
+              </Toast.Header>
+              <Toast.Body>{this.state.toastBody}</Toast.Body>
+            </Toast>
+          </Col>
+        </Row>  
       </Container>
     );
   }
