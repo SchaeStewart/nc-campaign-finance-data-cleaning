@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+//@ts-check
 require('dotenv').config();
 const db = require('../db');
 
@@ -20,40 +21,78 @@ const cleanRecords = async (uncleanContributions) => {
   }
 };
 
-const processRecords = async ({ client, limit, condition }) => {
+/**
+ * @param {import('pg').PoolClient} client
+ * @param {string} name
+ * @param {string} address
+ * @returns {Promise<import('pg').QueryArrayResult>}
+ */
+const searchRecords = async (client, name, address) => {
+  return client.query(
+    `select *
+        from raw_contributions
+        where name % $1
+            and street_line_1 % $2
+            and not exists (select 1 from contributions where source_contribution_id = id)
+            `,
+    [name, address],
+  );
+};
+
+/**
+ * @param {import('pg').PoolClient} client
+ * @param {string} name
+ * @param {string} address
+ * @returns {Promise<import('pg').QueryArrayResult>}
+ */
+const searchNoIdenticals = (client, name, address) => {
+  return client.query(
+    `select *
+      from raw_contributions
+        where not exists(select 1 from contributions where source_contribution_id = id)
+        and (name % $1)
+        and (street_line_1 % $2)
+        and (select count(*)
+            from raw_contributions
+            where not exists(select 1 from contributions where source_contribution_id = id)
+              and name % $1) <= 1
+        and (select count(*)
+            from raw_contributions
+            where not exists(select 1 from contributions where source_contribution_id = id)
+              and street_line_1 % $2) <= 1`,
+    [name, address],
+  );
+};
+
+/**
+ *
+ * @param {object} args
+ * @param {import('pg').PoolClient} args.client - pg client
+ * @param {number|string} args.limit - double representing the trgm_limit
+ * @param {function(number):boolean} args.condition - a function that will receive the rowCount, if the function is false, the records will be processed
+ * @param {function(import('pg').PoolClient, string, string): import('pg').QueryArrayResult} args.searchFn - a function that will takes a client, name, address as args and returns a pg query result 
+ */
+const processRecords = async ({ client, limit, condition, searchFn }) => {
   await client.query('select set_limit($1)', [limit]);
   await client.query(`create temporary table no_matches (id UUID not null)`);
   let isProcessing = true;
   while (isProcessing) {
-    // WARNING infinite loop. The program should exit when there is no search record in the db
-    // const tmp = await client.query('select * from no_matches')
-    // console.log('no matches', tmp.rowCount)
-
     const record = await client.query(
       `select id, name, street_line_1 as address, zip_code, city from raw_contributions 
             where not exists (select 1 from contributions where source_contribution_id = id)
-              and not exists (select 1 from no_matches where source_contributions_id = id)
+              and not exists (select 1 from no_matches where raw_contributions.id = id)
             limit 1`,
     );
 
     if (record.rowCount === 0 || record.rows.length === 0) {
       console.log('no search record found. stopping process');
       isProcessing = false;
-      await client.query(`drop table if exists no_matches`)
+      await client.query(`drop table if exists no_matches`);
       continue;
     }
 
     const search = record.rows[0];
-    let records = await client.query(
-      `select *
-        from raw_contributions
-        where name % $1
-            and street_line_1 % $2
-            not exists (select 1 from contributions where source_contribution_id = id)
-            `,
-      [search.name, search.address],
-    );
-
+    let records = await searchFn(client, search.name, search.address);
     if (!condition(records.rowCount)) {
       console.log(
         'No matches for name:',
@@ -71,11 +110,6 @@ const processRecords = async ({ client, limit, condition }) => {
   }
 };
 
-// TODO: create tmp table at top level from contributors
-// Add all info from failed searches to tmp (not just id)
-// On second pass search through tmp table instead of raw_contributions
-/**
- */
 (async () => {
   let client = null;
   try {
@@ -85,21 +119,28 @@ const processRecords = async ({ client, limit, condition }) => {
       client,
       limit,
       condition: (rowCount) => rowCount > 1,
+      // @ts-ignore
+      searchFn: searchRecords
     });
     await processRecords({
       client,
       limit: '0.3',
       condition: (rowCount) => rowCount === 1,
+      // @ts-ignore
+      searchFn: searchRecords
     });
+    // Only process records that do not have a duplicate (or high match) name and address
     await processRecords({
       client,
-      limit: '1.0',
+      limit: '0.8',
       condition: (rowCount) => rowCount === 1,
+      // @ts-ignore
+      searchFn: searchNoIdenticals
     });
     const endTime = new Date();
     console.log('Start time', startTime);
     console.log('End time', endTime);
-    console.log('Total time', startTime.getTime() - endTime.getTime(), 'ms');
+    console.log('Total time', endTime.getTime() - startTime.getTime(), 'ms');
   } catch (e) {
     console.error(e);
   } finally {
