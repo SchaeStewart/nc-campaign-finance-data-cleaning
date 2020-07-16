@@ -37,6 +37,14 @@ const columns = [
     dataField: 'zip_code',
     text: 'Zipcode',
   },
+  {
+    dataField: 'profession',
+    text: 'Profession'
+  },
+  {
+    dataField: 'employer_name',
+    text: 'Employer'
+  }
 ];
 
 const selectRowCheck = {
