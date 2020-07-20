@@ -16,7 +16,7 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "node-pg-migrate": "^4.7.0",
     "pg": "^8.0.3",
     "pg-copy-streams": "^3.0.0"
