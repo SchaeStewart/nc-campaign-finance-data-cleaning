@@ -132,6 +132,6 @@ const copyFromCSV = (fileStream, tableName, client, columns) =>
   } catch (err) {
     console.error('Error copying file to database', err);
   } finally {
-    await client.end();
+    await client.release();
   }
 })();
